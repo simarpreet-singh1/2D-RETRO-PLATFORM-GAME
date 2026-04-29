@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRO PLATFORM GAME</title>
+    <meta name="description"
+        content="A visually stunning 3D stealth maze game with blocky characters and procedural levels.">
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="game-container"></div>
+
+    <!-- Top HUD -->
+    <div id="ui-top-left" class="glass-panel">
+        <div class="stat-row"><span class="label">LEVEL</span>
+            <div id="level" class="value">1</div>
+        </div>
+        <div class="stat-row"><span class="label">SCORE</span>
+            <div id="score" class="value">0</div>
+        </div>
+        <div class="stat-row"><span class="label">TIME</span>
+            <div id="timer" class="value">0s</div>
+        </div>
+        <div class="stat-row" id="player-name-row" style="display:none;">
+            <span class="label">PLAYER</span>
+            <div id="player-name-hud" class="value" style="font-size:0.9rem; color:#60a5fa;"></div>
+        </div>
+    </div>
+
+    <div id="ui-top-center">
+        <div id="hearts-container">
+            <!-- Hearts will be injected here -->
+        </div>
+    </div>
+
+    <div id="ui-top-right">
+        <div id="coins-hud" class="glass-panel-small">
+            <div class="coin-icon"></div>
+            <span id="coins-count" class="value">0/10</span>
+        </div>
+        <div id="minimap-container" class="glass-panel-map">
+            <canvas id="minimap"></canvas>
+        </div>
+        <button id="leaderboard-btn" class="circle-btn leaderboard-circle-btn" title="Leaderboard">🏆</button>
+    </div>
+
+    <!-- Guide Mode Active Banner -->
+    <div id="guide-banner" class="hidden"
+        style="position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:20;padding:8px 24px;background:rgba(96,165,250,0.85);backdrop-filter:blur(10px);border-radius:0 0 14px 14px;font-weight:800;letter-spacing:2px;font-size:0.85rem;color:#fff;display:flex;gap:18px;align-items:center;">
+        <span>👁 GUIDE MODE ACTIVE</span>
+        <span id="guide-objective" style="opacity:0.85;">Collecting coins…</span>
+        <button id="guide-stop-btn"
+            style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:4px 12px;color:#fff;cursor:pointer;font-weight:800;">✕
+            STOP</button>
+    </div>
+    <div id="center-message-container">
+        <div id="center-message" class="dark-panel">COLLECT ALL COINS AND REACH THE EXIT</div>
+    </div>
+
+    <!-- Bottom Controls (Restart/Pause) -->
+    <div id="ui-bottom-right-controls">
+        <button id="pause-btn-side" class="circle-btn">
+            <div class="icon pause"></div>
+        </button>
+        <button id="restart-btn-side" class="circle-btn">
+            <div class="icon restart"></div>
+        </button>
+    </div>
+
+    <!-- =================== LOGIN SCREEN =================== -->
+    <div id="login-screen" class="screen">
+        <div class="login-card">
+            <div class="login-logo">🌀</div>
+            <h1 style="font-size:2.2rem; margin-bottom:4px;">RETRO PLATFORM GAME</h1>
+            <p style="color:#94a3b8; margin-bottom:30px; font-size:0.9rem; letter-spacing:1px;">ENTER YOUR CODENAME TO
+                BEGIN</p>
+            <form id="login-form" autocomplete="off">
+                <div class="input-group">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="login-username" placeholder="Username" maxlength="20" required
+                        autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <span class="input-icon">🔑</span>
+                    <input type="password" id="login-password" placeholder="Password" maxlength="32" required
+                        autocomplete="new-password">
+                </div>
+                <p id="login-error" class="login-error hidden">Incorrect password. Try again.</p>
+                <button type="submit" id="login-submit-btn" class="main-btn" style="width:100%; margin-top:12px;">
+                    <span id="login-btn-text">PLAY / REGISTER</span>
+                </button>
+            </form>
+            <button id="guest-login-btn" class="main-btn secondary-btn" style="width:100%; margin-top:8px;">
+                PLAY AS GUEST
+            </button>
+            <p style="color:#475569; font-size:0.78rem; margin-top:18px; text-align:center;">New player? Just pick a
+                username & password to register.</p>
+        </div>
+    </div>
+
+    <!-- =================== WIN SCREEN =================== -->
+    <div id="win-screen" class="screen hidden">
+        <h1>MISSION COMPLETE</h1>
+        <p id="win-message">Objective reached. Extracting operative...</p>
+        <div id="win-score-display"
+            style="margin-top:18px; font-size:1.3rem; font-weight:800; color:#4ade80; letter-spacing:2px;"></div>
+
+        <!-- Leaderboard inside win screen -->
+        <div id="win-leaderboard" class="leaderboard-box" style="margin-top:20px;">
+            <div class="lb-title">🏆 TOP OPERATIVES</div>
+            <div id="win-lb-rows" class="lb-rows">
+                <div class="lb-loading">Loading…</div>
+            </div>
+        </div>
+
+        <button id="next-level-btn" class="main-btn">NEXT LEVEL</button>
+    </div>
+
+    <!-- =================== GAME OVER SCREEN =================== -->
+    <div id="game-over-screen" class="screen hidden">
+        <h1>GAME OVER</h1>
+        <p id="game-over-message">You were detected and neutralized.</p>
+        <div style="display:flex;gap:16px;margin-top:30px;">
+            <button id="restart-btn-main" class="main-btn">RETRY MISSION</button>
+            <button id="hint-btn" class="main-btn hint-main-btn">SHOW HINT 👁</button>
+        </div>
+    </div>
+
+    <!-- Hint / Guide Mode Panel -->
+    <div id="hint-screen" class="screen hidden">
+        <h1 style="font-size:2.2rem;">GUIDE MODE</h1>
+        <p style="max-width:400px;text-align:center;margin-bottom:10px;">A ghost clone will lead you to every coin then
+            to the exit.<br>Follow the blue guide!</p>
+        <div style="display:flex;gap:16px;margin-top:20px;">
+            <button id="hint-follow-btn" class="main-btn">FOLLOW GUIDE</button>
+            <button id="hint-auto-btn" class="main-btn" style="background:#8b5cf6;">AUTO COMPLETE</button>
+        </div>
+    </div>
+
+    <!-- =================== LEADERBOARD MODAL =================== -->
+    <div id="leaderboard-modal" class="screen hidden" style="background:rgba(0,0,0,0.7);">
+        <div class="lb-modal-card">
+            <div class="lb-title" style="font-size:1.5rem; margin-bottom:20px;">🏆 GLOBAL LEADERBOARD</div>
+            <div id="modal-lb-rows" class="lb-rows">
+                <div class="lb-loading">Loading…</div>
+            </div>
+            <button id="lb-close-btn" class="main-btn" style="margin-top:24px; background:#334155;">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen">
+        <div class="loader"></div>
+        <h1>LOADING MAZE</h1>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
