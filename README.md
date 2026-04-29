@@ -1,6 +1,6 @@
-# Stealth Maze Game
+# 2d retro platfrom  Game
 
-A full-stack 3D top-down stealth maze game using Three.js and Spring Boot.
+A full-stack 3D  maze game using Three.js and Spring Boot.
 
 ## Prerequisites
 - **Java 17+** (Required for Spring Boot backend)
